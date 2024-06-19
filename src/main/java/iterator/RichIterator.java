@@ -10,14 +10,20 @@ public interface RichIterator<A> extends Iterator<A> {
      * @return true if there are no more elements, false otherwise
      */
     default boolean isEmpty() {
-        throw new NotImplementedException();
+        return !hasNext();
     }
 
     /**
      * @return number of elements
      */
     default int length() {
-        throw new NotImplementedException();
+        int count = 0;
+        RichIterator<A> tmpIter = new Wrapper<>( this.toList().iterator());
+        while (tmpIter.hasNext()) {
+            count++;
+            tmpIter.next();
+        }
+        return count;
     }
 
     /**
@@ -25,14 +31,24 @@ public interface RichIterator<A> extends Iterator<A> {
      * @throws NoSuchElementException if the iterator is empty
      */
     default A last() {
-        throw new NotImplementedException();
+        if (this.isEmpty()) {
+            throw new NoSuchElementException();
+        }
+        A next = null;
+        while (this.hasNext()) {
+            next = this.next();
+        }
+        return next;
     }
 
     /**
      * @return the last element if not empty.
      */
     default Optional<A> lastOptional() {
-        throw new NotImplementedException();
+            if (this.hasNext()) {
+                return Optional.of(this.last());
+            }
+            return Optional.empty();
     }
 
     /**
@@ -40,7 +56,14 @@ public interface RichIterator<A> extends Iterator<A> {
      * @return the index of the element if exists, -1 otherwise
      */
     default int indexOf(A elem) {
-        throw new NotImplementedException();
+        int idx = 0;
+        while (this.hasNext()) {
+            if (Objects.equals(elem, this.next())) {
+                return idx;
+            }
+            idx++;
+        }
+        return -1;
     }
 
     /**
@@ -50,14 +73,23 @@ public interface RichIterator<A> extends Iterator<A> {
      * @return Optional.of(A) if exists, empty() otherwise.
      */
     default Optional<A> find(Predicate<? super A> f) {
-        throw new NotImplementedException();
+        while (this.hasNext()) {
+            A currElement = this.next();
+            if (f.test(currElement)) {
+                return Optional.of(currElement);
+            }
+        }
+        return Optional.empty();
     }
 
     /**
      * @return Optional.of(next) if exists or empty() otherwise
      */
     default Optional<A> nextOptional() {
-        throw new NotImplementedException();
+        if (this.hasNext()) {
+            return Optional.of(this.next());
+        }
+        return Optional.empty();
     }
 
     /**
@@ -66,7 +98,9 @@ public interface RichIterator<A> extends Iterator<A> {
      * @param f the Consumer
      */
     default void foreach(Consumer<? super A> f) {
-        throw new NotImplementedException();
+        while (this.hasNext()){
+            f.accept(this.next());
+        }
     }
 
     /**
@@ -74,7 +108,12 @@ public interface RichIterator<A> extends Iterator<A> {
      * @return true if exists, false otherwise
      */
     default boolean contains(A elem) {
-        throw new NotImplementedException();
+        while (this.hasNext()) {
+            if (elem.equals(this.next())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -88,21 +127,27 @@ public interface RichIterator<A> extends Iterator<A> {
      * @return the collection
      */
     default <C extends Collection<A>> C toCollection(Supplier<C> collectionFactory) {
-        throw new NotImplementedException();
+        C newCol = collectionFactory.get();
+        newCol.addAll(toList());
+        return newCol;
     }
 
     /**
      * @return a list built from the iterator's elements
      */
     default List<A> toList() {
-        throw new NotImplementedException();
+        List<A> list = new ArrayList<>();
+        while (this.hasNext()) {
+            list.add(this.next());
+        }
+        return list;
     }
 
     /**
      * @return a set built from the iterator's elements
      */
     default Set<A> toSet() {
-        throw new NotImplementedException();
+        return this.toCollection(HashSet::new);
     }
 
     /**
@@ -110,8 +155,12 @@ public interface RichIterator<A> extends Iterator<A> {
      * @return true if this and that have the same elements in the same order
      */
     default boolean sameElements(Iterator<A> that) {
-        // TODO: implement this method
-        throw new NotImplementedException();
+        while (that.hasNext() && this.hasNext()) {
+            if (!this.next().equals(that.next())) {
+                return false;
+            }
+        }
+        return !(that.hasNext() || this.hasNext());
     }
 
     // hard
@@ -124,8 +173,7 @@ public interface RichIterator<A> extends Iterator<A> {
      * @return an iterator that contains only this element
      */
     static <A> RichIterator<A> pure(A elem) {
-        // TODO: implement this method
-        throw new NotImplementedException();
+         return apply(elem);
     }
 
     /**
@@ -136,7 +184,7 @@ public interface RichIterator<A> extends Iterator<A> {
      * @throws NoSuchElementException if the iterator is empty
      */
     default A max(Comparator<? super A> comparator) {
-        throw new NotImplementedException();
+        return this.toList().stream().max(comparator).orElse(null);
     }
 
     /**
@@ -147,7 +195,7 @@ public interface RichIterator<A> extends Iterator<A> {
      * @throws NoSuchElementException if the iterator is empty
      */
     default A min(Comparator<? super A> comparator) {
-        throw new NotImplementedException();
+        return this.toList().stream().min(comparator).orElse(null);
     }
 
     /**
